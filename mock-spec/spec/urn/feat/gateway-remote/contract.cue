@@ -4,8 +4,8 @@ contract: {
   components: ["wsl-nixos", "dev-nixos"]
 
   commands: {
-    wsl: ["help", "doctor", "pick", "ssh"]
-    dev: ["status"]
+    wsl: ["gw-help", "gw-doctor", "gw-pick", "gw-ssh"]
+    dev: ["gw-status"]
   }
 
   wsl: {
