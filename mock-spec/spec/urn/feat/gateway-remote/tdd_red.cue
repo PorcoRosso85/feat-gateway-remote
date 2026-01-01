@@ -46,6 +46,15 @@ tdd_red: {
         stdoutContains: ["contracted command: status"]
         stdoutForbid: []
       }
+    },
+    {
+      id: "forbid-scan"
+      exec: ["doctor", "forbid-scan"]
+      expect: {
+        exit: 0
+        stdoutContains: ["OK:"]
+        stdoutForbid: ["FAIL"]
+      }
     }
   ]
 }

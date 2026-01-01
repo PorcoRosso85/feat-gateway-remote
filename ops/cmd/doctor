@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # doctor: contract verification tool
 
+SCRIPT_DIR="$(cd "${0%/*}" && pwd)"
+
 case "${1:-check}" in
   check-tools)
     # Check required tools from contract
@@ -13,8 +15,24 @@ case "${1:-check}" in
     echo "All required tools available: fzf, ssh, zmx"
     exit 0
     ;;
+  forbid-scan)
+    # Static forbid scan: check for prohibited items in artifacts
+    fail=0
+
+    # tmux injection check (word boundary, exclude this script)
+    # -r: recursive, -I: ignore binary, -w: word boundary
+    if grep -rIw --exclude=doctor "tmux" "$SCRIPT_DIR" 2>/dev/null; then
+      echo "FAIL: tmux detected in output files"
+      fail=1
+    fi
+
+    if [ $fail -eq 0 ]; then
+      echo "OK: No forbidden items detected"
+    fi
+    exit $fail
+    ;;
   *)
     echo "contracted command: doctor"
-    echo "Usage: doctor check-tools"
+    echo "Usage: doctor check-tools | forbid-scan"
     ;;
 esac

@@ -79,27 +79,46 @@
           for i in $(seq 0 $((count-1))); do
             id="$(echo "$json" | jq -r ".tests[$i].id")"
             name="$(echo "$json" | jq -r ".tests[$i].exec[0]")"
-
             args="$(echo "$json" | jq -r ".tests[$i].exec[1:] | @sh")"
 
-            out="$(
+            cmd_out="$(
               set +e
               ${pkgsWithOverlays.bash}/bin/bash ${cmdDir}/"$name" $(eval "echo $args") 2>&1
               echo "___EXIT:$?___"
             )"
-            exitcode="$(echo "$out" | sed -n 's/^___EXIT:\([0-9]\+\)___$/\1/p' | tail -1)"
-            stdout="$(echo "$out" | sed '/^___EXIT:/d')"
+            exitcode="$(echo "$cmd_out" | sed -n 's/^___EXIT:\([0-9]\+\)___$/\1/p' | tail -1)"
+            stdout="$(echo "$cmd_out" | sed '/^___EXIT:/d')"
 
             exp_exit="$(echo "$json" | jq -r ".tests[$i].expect.exit")"
-            [ "$exitcode" = "$exp_exit" ] || { echo "FAIL $id: exit $exitcode != $exp_exit"; exit 1; }
+            if [ "$exitcode" != "$exp_exit" ]; then
+              echo "FAIL $id: exit $exitcode != $exp_exit"
+              exit 1
+            fi
 
-            echo "$json" | jq -r ".tests[$i].expect.stdoutContains[]? // empty" | while read -r tok; do
-              echo "$stdout" | grep -F -- "$tok" >/dev/null || { echo "FAIL $id: missing $tok"; exit 1; }
-            done
+            fail_reason=""
+            while IFS= read -r tok; do
+              [ -z "$tok" ] && continue
+              if ! echo "$stdout" | grep -F -- "$tok" >/dev/null 2>&1; then
+                fail_reason="missing '$tok'"
+                break
+              fi
+            done < <(echo "$json" | jq -r ".tests[$i].expect.stdoutContains[]? // empty")
+            if [ -n "$fail_reason" ]; then
+              echo "FAIL $id: stdoutContains $fail_reason"
+              exit 1
+            fi
 
-            echo "$json" | jq -r ".tests[$i].expect.stdoutForbid[]? // empty" | while read -r tok; do
-              echo "$stdout" | grep -F -- "$tok" >/dev/null && { echo "FAIL $id: forbid hit $tok"; exit 1; }
-            done
+            while IFS= read -r tok; do
+              [ -z "$tok" ] && continue
+              if echo "$stdout" | grep -F -- "$tok" >/dev/null 2>&1; then
+                fail_reason="hit '$tok'"
+                break
+              fi
+            done < <(echo "$json" | jq -r ".tests[$i].expect.stdoutForbid[]? // empty")
+            if [ -n "$fail_reason" ]; then
+              echo "FAIL $id: stdoutForbid $fail_reason"
+              exit 1
+            fi
           done
 
           touch $out
