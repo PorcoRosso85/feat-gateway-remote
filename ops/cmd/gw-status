@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# status: Remote system status observation (dev-only)
+# gw-status: Remote system status observation (dev-only)
 
-echo "contracted command: status (dev-only)"
+echo "contracted command: gw-status (dev-only)"
 echo ""
 
 # Basic system info for development/debugging

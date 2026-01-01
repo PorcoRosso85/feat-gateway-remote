@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# gw-help: Display help information
+
+echo "contracted command: gw-help"
+echo ""
+echo "Available commands:"
+echo "  gw-help      Show this help"
+echo "  gw-doctor    System verification and forbid scanning"
+echo "  gw-pick      Interactive selection via fzf"
+echo "  gw-ssh       Direct SSH connection"
+echo "  gw-status    Remote system status (dev-only)"
+echo ""
+echo "Use: <command> --help for individual command usage"
+
+exit 0

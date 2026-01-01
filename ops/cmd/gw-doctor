@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# doctor: contract verification tool
+# gw-doctor: contract verification tool
 
 SCRIPT_DIR="$(cd "${0%/*}" && pwd)"
 
@@ -21,7 +21,7 @@ case "${1:-check}" in
 
     # tmux injection check (word boundary, exclude this script)
     # -r: recursive, -I: ignore binary, -w: word boundary
-    if grep -rIw --exclude=doctor "tmux" "$SCRIPT_DIR" 2>/dev/null; then
+    if grep -rIw --exclude=gw-doctor "tmux" "$SCRIPT_DIR" 2>/dev/null; then
       echo "FAIL: tmux detected in output files"
       fail=1
     fi
@@ -32,7 +32,7 @@ case "${1:-check}" in
     exit $fail
     ;;
   *)
-    echo "contracted command: doctor"
-    echo "Usage: doctor check-tools | forbid-scan"
+    echo "contracted command: gw-doctor"
+    echo "Usage: gw-doctor check-tools | forbid-scan"
     ;;
 esac

@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# gw-ssh: Direct SSH connection (ProxyJump prohibited)
+
+if ! command -v ssh >/dev/null 2>&1; then
+  echo "contracted command: gw-ssh (openssh not available)"
+  exit 1
+fi
+
+echo "contracted command: gw-ssh (openssh)"
+echo "Usage: gw-ssh [user@]host [command]"
+echo ""
+echo "Note: Indirect connection methods are prohibited."
+
+exit 0

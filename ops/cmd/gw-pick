@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# pick: Interactive selection via fzf
+# gw-pick: Interactive selection via fzf
 
 if ! command -v fzf >/dev/null 2>&1; then
-  echo "contracted command: pick (fzf not available)"
+  echo "contracted command: gw-pick (fzf not available)"
   exit 1
 fi
 
 # For now, show usage and return
 # Real fzf integration would go here
-echo "contracted command: pick (uses fzf)"
-echo "Usage: pick [options]"
+echo "contracted command: gw-pick (uses fzf)"
+echo "Usage: gw-pick [options]"
 echo ""
 echo "Options:"
 echo "  --height <rows>  Set fzf height"
