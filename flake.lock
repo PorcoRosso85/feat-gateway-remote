@@ -1,0 +1,61 @@
+{
+  "nodes": {
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1767116409,
+        "narHash": "sha256-5vKw92l1GyTnjoLzEagJy5V5mDFck72LiQWZSOnSicw=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "cad22e7d996aea55ecab064e84834289143e44a0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "nixpkgs": "nixpkgs",
+        "spec": "spec",
+        "zmxPkg": "zmxPkg"
+      }
+    },
+    "spec": {
+      "flake": false,
+      "locked": {
+        "path": "./mock-spec",
+        "type": "path"
+      },
+      "original": {
+        "path": "./mock-spec",
+        "type": "path"
+      },
+      "parent": []
+    },
+    "zmxPkg": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1767252224,
+        "narHash": "sha256-+ExcZtWZ4M8bnOjXPRMJd/KNURhNoAc/e9B0wGrmWE4=",
+        "owner": "PorcoRosso85",
+        "repo": "pkgs-zmx",
+        "rev": "a88c7c8551c50077d7c338b10940a8e3fae3770a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "PorcoRosso85",
+        "repo": "pkgs-zmx",
+        "type": "github"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

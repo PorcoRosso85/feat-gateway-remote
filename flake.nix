@@ -38,69 +38,71 @@
         SPEC_DIR = specDir;
       };
 
-      checks.${system}.input-test = pkgsWithOverlays.runCommand "input-test" {} ''
-        set -euo pipefail
-        test -f ${specDir}/tdd_red.cue
-        test -f ${specDir}/contract.cue
-        touch $out
-      '';
+      checks.${system} = {
+        input-test = pkgsWithOverlays.runCommand "input-test" {} ''
+          set -euo pipefail
+          test -f ${specDir}/tdd_red.cue
+          test -f ${specDir}/contract.cue
+          touch $out
+        '';
 
-      checks.${system}.contract-apps = pkgsWithOverlays.runCommand "contract-apps"
-        { buildInputs = [ pkgsWithOverlays.cue pkgsWithOverlays.jq ]; } ''
-        set -euo pipefail
+        contract-apps = pkgsWithOverlays.runCommand "contract-apps"
+          { buildInputs = [ pkgsWithOverlays.cue pkgsWithOverlays.jq ]; } ''
+          set -euo pipefail
 
-        expected="$(
-          cue eval ${specDir}/contract.cue -e contract.commands.wsl --out json \
-            | jq -r '.[]' | sort
-        )"
-        actual="$(ls ${cmdDir} | sort)"
-
-        if [ "$expected" != "$actual" ]; then
-          echo "FAIL: contract mismatch"
-          echo "Expected:"
-          echo "$expected"
-          echo "Actual:"
-          echo "$actual"
-          exit 1
-        fi
-
-        touch $out
-      '';
-
-      checks.${system}.bb-red = pkgsWithOverlays.runCommand "bb-red"
-        { buildInputs = [ pkgsWithOverlays.cue pkgsWithOverlays.jq pkgsWithOverlays.bash pkgsWithOverlays.zmx pkgsWithOverlays.fzf pkgsWithOverlays.openssh ]; } ''
-        set -euo pipefail
-
-        json="$(cue eval ${specDir}/tdd_red.cue -e tdd_red --out json)"
-        count="$(echo "$json" | jq '.tests | length')"
-
-        for i in $(seq 0 $((count-1))); do
-          id="$(echo "$json" | jq -r ".tests[$i].id")"
-          name="$(echo "$json" | jq -r ".tests[$i].exec[0]")"
-
-          args="$(echo "$json" | jq -r ".tests[$i].exec[1:] | @sh")"
-
-          out="$(
-            set +e
-            ${pkgsWithOverlays.bash}/bin/bash ${cmdDir}/"$name" $(eval "echo $args") 2>&1
-            echo "___EXIT:$?___"
+          expected="$(
+            cue eval ${specDir}/contract.cue -e contract.commands.wsl --out json \
+              | jq -r '.[]' | sort
           )"
-          exitcode="$(echo "$out" | sed -n 's/^___EXIT:\([0-9]\+\)___$/\1/p' | tail -1)"
-          stdout="$(echo "$out" | sed '/^___EXIT:/d')"
+          actual="$(ls ${cmdDir} | sort)"
 
-          exp_exit="$(echo "$json" | jq -r ".tests[$i].expect.exit")"
-          [ "$exitcode" = "$exp_exit" ] || { echo "FAIL $id: exit $exitcode != $exp_exit"; exit 1; }
+          if [ "$expected" != "$actual" ]; then
+            echo "FAIL: contract mismatch"
+            echo "Expected:"
+            echo "$expected"
+            echo "Actual:"
+            echo "$actual"
+            exit 1
+          fi
 
-          echo "$json" | jq -r ".tests[$i].expect.stdoutContains[]? // empty" | while read -r tok; do
-            echo "$stdout" | grep -F -- "$tok" >/dev/null || { echo "FAIL $id: missing $tok"; exit 1; }
+          touch $out
+        '';
+
+        bb-red = pkgsWithOverlays.runCommand "bb-red"
+          { buildInputs = [ pkgsWithOverlays.cue pkgsWithOverlays.jq pkgsWithOverlays.bash pkgsWithOverlays.zmx pkgsWithOverlays.fzf pkgsWithOverlays.openssh ]; } ''
+          set -euo pipefail
+
+          json="$(cue eval ${specDir}/tdd_red.cue -e tdd_red --out json)"
+          count="$(echo "$json" | jq '.tests | length')"
+
+          for i in $(seq 0 $((count-1))); do
+            id="$(echo "$json" | jq -r ".tests[$i].id")"
+            name="$(echo "$json" | jq -r ".tests[$i].exec[0]")"
+
+            args="$(echo "$json" | jq -r ".tests[$i].exec[1:] | @sh")"
+
+            out="$(
+              set +e
+              ${pkgsWithOverlays.bash}/bin/bash ${cmdDir}/"$name" $(eval "echo $args") 2>&1
+              echo "___EXIT:$?___"
+            )"
+            exitcode="$(echo "$out" | sed -n 's/^___EXIT:\([0-9]\+\)___$/\1/p' | tail -1)"
+            stdout="$(echo "$out" | sed '/^___EXIT:/d')"
+
+            exp_exit="$(echo "$json" | jq -r ".tests[$i].expect.exit")"
+            [ "$exitcode" = "$exp_exit" ] || { echo "FAIL $id: exit $exitcode != $exp_exit"; exit 1; }
+
+            echo "$json" | jq -r ".tests[$i].expect.stdoutContains[]? // empty" | while read -r tok; do
+              echo "$stdout" | grep -F -- "$tok" >/dev/null || { echo "FAIL $id: missing $tok"; exit 1; }
+            done
+
+            echo "$json" | jq -r ".tests[$i].expect.stdoutForbid[]? // empty" | while read -r tok; do
+              echo "$stdout" | grep -F -- "$tok" >/dev/null && { echo "FAIL $id: forbid hit $tok"; exit 1; }
+            done
           done
 
-          echo "$json" | jq -r ".tests[$i].expect.stdoutForbid[]? // empty" | while read -r tok; do
-            echo "$stdout" | grep -F -- "$tok" >/dev/null && { echo "FAIL $id: forbid hit $tok"; exit 1; }
-          done
-        done
-
-        touch $out
-      '';
+          touch $out
+        '';
+      };
     };
 }
