@@ -1,2 +1,23 @@
 #!/usr/bin/env bash
+# status: Remote system status observation (dev-only)
+
 echo "contracted command: status (dev-only)"
+echo ""
+
+# Basic system info for development/debugging
+echo "System Information:"
+echo "  Hostname: $(hostname 2>/dev/null || echo 'unknown')"
+echo "  Uptime: $(uptime -p 2>/dev/null || uptime 2>/dev/null || echo 'unknown')"
+
+# Check key tools availability
+echo ""
+echo "Tool Status:"
+for tool in ssh fzf zmx; do
+  if command -v "$tool" >/dev/null 2>&1; then
+    echo "  $tool: available"
+  else
+    echo "  $tool: not found"
+  fi
+done
+
+exit 0
