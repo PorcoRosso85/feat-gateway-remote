@@ -8,19 +8,18 @@
     spec.url = "path:./mock-spec";
     spec.flake = false;
 
-    # zmx定義の再利用元（GitHub参照、lockでpin）
-    home.url = "github:PorcoRosso85/home";
-    home.inputs.nixpkgs.follows = "nixpkgs";
+    # zmx定義の再利用元（pkgs-zmx repo、lockでpin）
+    zmxPkg.url = "github:PorcoRosso85/pkgs-zmx";
+    zmxPkg.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, spec, home }:
+  outputs = { self, nixpkgs, spec, zmxPkg }:
     let
       system = "x86_64-linux";
-      pkgs = import nixpkgs { inherit system; };
 
-      # zmx overlay（home repoから再利用）
+      # zmx overlay（pkgs-zmx repoから再利用）
       zmxOverlay = final: prev: {
-        zmx = final.callPackage "${home}/.os/hosts/nixos-vm/zmx.nix" { };
+        zmx = final.callPackage ./zmx.nix { };
       };
 
       # overlay注入

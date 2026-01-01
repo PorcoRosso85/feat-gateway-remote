@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# doctor: contract verification tool
+
+case "${1:-check}" in
+  check-tools)
+    # Check required tools from contract
+    for tool in fzf ssh zmx; do
+      if ! command -v "$tool" >/dev/null 2>&1; then
+        echo "ERROR: required tool '$tool' not found"
+        exit 1
+      fi
+    done
+    echo "All required tools available: fzf, ssh, zmx"
+    exit 0
+    ;;
+  *)
+    echo "contracted command: doctor"
+    echo "Usage: doctor check-tools"
+    ;;
+esac

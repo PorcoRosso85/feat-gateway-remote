@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+echo "contracted command: pick (uses fzf)"

@@ -1,0 +1,2 @@
+#!/usr/bin/env bash
+echo "contracted command: status (dev-only)"
