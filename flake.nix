@@ -68,7 +68,7 @@
       '';
 
       checks.${system}.bb-red = pkgsWithOverlays.runCommand "bb-red"
-        { buildInputs = [ pkgsWithOverlays.cue pkgsWithOverlays.jq pkgsWithOverlays.bash pkgs.zmx pkgs.fzf pkgs.openssh ]; } ''
+        { buildInputs = [ pkgsWithOverlays.cue pkgsWithOverlays.jq pkgsWithOverlays.bash pkgsWithOverlays.zmx pkgsWithOverlays.fzf pkgsWithOverlays.openssh ]; } ''
         set -euo pipefail
 
         json="$(cue eval ${specDir}/tdd_red.cue -e tdd_red --out json)"
