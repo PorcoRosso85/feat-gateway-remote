@@ -32,6 +32,9 @@
 
       specDir = "${spec}/spec/urn/feat/gateway-remote";
       cmdDir = "${./ops/cmd}";
+
+      # Phase 5: flakeChecksList - Auto-generated from self.checks (no external command)
+      flakeChecksList = builtins.attrNames (self.checks.${system} or { });
     in
     {
       overlays.default = zmxOverlay;
@@ -208,6 +211,12 @@
 
               touch $out
             '';
+
+        # Phase 4: repo-cue-validity (Repo DoD - CI要件SSOT成立条件)
+        repo-cue-validity = import ./nix/checks/repo-cue-validity.nix {
+          inherit self system nixpkgs;
+          checksAttrNames = flakeChecksList;
+        };
       };
 
       packages.${system}.gateway-remote = pkgsWithOverlays.stdenvNoCC.mkDerivation {
