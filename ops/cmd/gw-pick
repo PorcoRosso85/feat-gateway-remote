@@ -6,13 +6,28 @@ if ! command -v fzf >/dev/null 2>&1; then
   exit 1
 fi
 
-# For now, show usage and return
-# Real fzf integration would go here
-echo "contracted command: gw-pick (uses fzf)"
-echo "Usage: gw-pick [options]"
-echo ""
-echo "Options:"
-echo "  --height <rows>  Set fzf height"
-echo "  --reverse        Show options in reverse"
+# Check if running interactively (TTY)
+if [ ! -t 1 ]; then
+  # Non-interactive: show usage
+  echo "contracted command: gw-pick (uses fzf)"
+  echo "Usage: gw-pick [options]"
+  echo ""
+  echo "Options:"
+  echo "  --height <rows>  Set fzf height"
+  echo "  --reverse        Show options in reverse"
+  exit 0
+fi
+
+# Interactive mode: launch fzf
+OPTIONS=("option-a: Choice A" "option-b: Choice B" "option-c: Choice C")
+
+CHOICE=$(printf '%s\n' "${OPTIONS[@]}" | cut -d: -f1 | fzf --height 50% --reverse)
+
+if [ -n "$CHOICE" ]; then
+  echo "Selected: $CHOICE"
+else
+  echo "No selection made"
+  exit 1
+fi
 
 exit 0
