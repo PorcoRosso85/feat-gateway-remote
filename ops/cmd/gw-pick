@@ -1,33 +1,64 @@
 #!/usr/bin/env bash
-# gw-pick: Interactive selection via fzf
+# gw-pick: Select zmx session or create new one via fzf
 
 if ! command -v fzf >/dev/null 2>&1; then
   echo "contracted command: gw-pick (fzf not available)"
   exit 1
 fi
 
-# Check if running interactively (TTY)
+zmx_sessions() {
+  if command -v zmx >/dev/null 2>&1; then
+    zmx list 2>/dev/null | grep -v "^no sessions" | grep -v "^zmx -" || true
+  fi
+}
+
+SESSIONS=$(zmx_sessions)
+
 if [ ! -t 1 ]; then
-  # Non-interactive: show usage
   echo "contracted command: gw-pick (uses fzf)"
   echo "Usage: gw-pick [options]"
   echo ""
   echo "Options:"
   echo "  --height <rows>  Set fzf height"
   echo "  --reverse        Show options in reverse"
+  if [ -n "$SESSIONS" ]; then
+    echo ""
+    echo "Available zmx sessions:"
+    echo "$SESSIONS" | head -5
+  fi
   exit 0
 fi
 
-# Interactive mode: launch fzf
-OPTIONS=("option-a: Choice A" "option-b: Choice B" "option-c: Choice C")
+OPTIONS=()
+if [ -n "$SESSIONS" ]; then
+  while IFS= read -r line; do
+    [ -z "$line" ] && continue
+    OPTIONS+=("session: $line")
+  done <<< "$SESSIONS"
+fi
+OPTIONS+=("new: Create new connection")
 
-CHOICE=$(printf '%s\n' "${OPTIONS[@]}" | cut -d: -f1 | fzf --height 50% --reverse)
+CHOICE=$(printf '%s\n' "${OPTIONS[@]}" | fzf --height 50% --reverse --prompt "Select session or create new: ")
 
-if [ -n "$CHOICE" ]; then
-  echo "Selected: $CHOICE"
-else
+if [ -z "$CHOICE" ]; then
   echo "No selection made"
   exit 1
+fi
+
+if [[ "$CHOICE" == session:* ]]; then
+  SESSION_NAME=$(echo "$CHOICE" | sed 's/session: //')
+  echo "Attaching to session: $SESSION_NAME"
+  exec zmx attach "$SESSION_NAME"
+elif [[ "$CHOICE" == new:* ]]; then
+  echo "Enter host to connect (e.g., user@host or hostname):"
+  read -r HOST
+  if [ -n "$HOST" ]; then
+    echo "Starting session for: $HOST"
+    exec zmx run "$HOST"
+  else
+    echo "No host entered"
+    exit 1
+  fi
 fi
 
 exit 0
