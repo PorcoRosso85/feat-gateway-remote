@@ -4,11 +4,9 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
-    # mock spec（生パス入力）
     spec.url = "path:./mock-spec";
     spec.flake = false;
 
-    # zmx定義の再利用元（pkgs-zmx repo、lockでpin）
     zmxPkg.url = "github:PorcoRosso85/pkgs-zmx";
     zmxPkg.inputs.nixpkgs.follows = "nixpkgs";
   };
@@ -23,12 +21,10 @@
     let
       system = "x86_64-linux";
 
-      # zmx overlay（pkgs-zmx repoから再利用）
       zmxOverlay = final: prev: {
         zmx = final.callPackage ./zmx.nix { };
       };
 
-      # overlay注入
       pkgsWithOverlays = import nixpkgs {
         inherit system;
         overlays = [ self.overlays.default ];
@@ -40,16 +36,76 @@
     {
       overlays.default = zmxOverlay;
 
+      apps.${system} = {
+        gw-help = {
+          type = "app";
+          program = "${self.packages.${system}.gateway-remote}/bin/gw-help";
+        };
+        gw-doctor = {
+          type = "app";
+          program = "${self.packages.${system}.gateway-remote}/bin/gw-doctor";
+        };
+        gw-pick = {
+          type = "app";
+          program = "${self.packages.${system}.gateway-remote}/bin/gw-pick";
+        };
+        gw-ssh = {
+          type = "app";
+          program = "${self.packages.${system}.gateway-remote}/bin/gw-ssh";
+        };
+        gw-status = {
+          type = "app";
+          program = "${self.packages.${system}.gateway-remote}/bin/gw-status";
+        };
+      };
+
       devShells.${system}.default = pkgsWithOverlays.mkShell {
         packages = with pkgsWithOverlays; [
           git
           cue
           jq
+          fzf
+          openssh
+          zmx
         ];
+        shellHook = ''
+          export PATH="${self.packages.${system}.gateway-remote}/bin:$PATH"
+        '';
         SPEC_DIR = specDir;
       };
 
       checks.${system} = {
+        apps-wireup = pkgsWithOverlays.runCommand "apps-wireup" { } ''
+          set -euo pipefail
+          test -x ${self.apps.${system}.gw-doctor.program}
+          test -x ${self.apps.${system}.gw-pick.program}
+          test -x ${self.apps.${system}.gw-ssh.program}
+          test -x ${self.apps.${system}.gw-status.program}
+          touch $out
+        '';
+
+        devshell-smoke =
+          pkgsWithOverlays.runCommand "devshell-smoke"
+            {
+              nativeBuildInputs = [
+                pkgsWithOverlays.fzf
+                pkgsWithOverlays.openssh
+                pkgsWithOverlays.zmx
+                self.packages.${system}.gateway-remote
+              ];
+            }
+            ''
+              set -euo pipefail
+              export PATH="${self.packages.${system}.gateway-remote}/bin:$PATH"
+              command -v gw-doctor >/dev/null
+              command -v fzf >/dev/null
+              command -v ssh >/dev/null
+              gw-doctor check-tools
+              gw-doctor forbid-scan
+              gw-status >/dev/null
+              touch $out
+            '';
+
         input-test = pkgsWithOverlays.runCommand "input-test" { } ''
           set -euo pipefail
           test -f ${specDir}/tdd_red.cue
@@ -68,7 +124,6 @@
             ''
               set -euo pipefail
 
-              # wsl向けコマンドのみ比較（dev向けstatusは除外）
               expected="$(
                 ls ${cmdDir}/gw-help ${cmdDir}/gw-doctor ${cmdDir}/gw-pick ${cmdDir}/gw-ssh 2>/dev/null \
                   | xargs -I{} basename {} | sort
@@ -76,7 +131,7 @@
               actual="$(ls ${cmdDir}/gw-help ${cmdDir}/gw-doctor ${cmdDir}/gw-pick ${cmdDir}/gw-ssh 2>/dev/null | xargs -I{} basename {} | sort)"
 
               if [ "$expected" != "$actual" ]; then
-                echo "FAIL: contract mismatch (wsl commands only)"
+                echo "FAIL: contract mismatch"
                 echo "Expected:"
                 echo "$expected"
                 echo "Actual:"
@@ -162,13 +217,7 @@
 
         installPhase = ''
           mkdir -p $out/bin
-          echo "Source directory contents:"
-          ls -la $src/
-          echo "ops/cmd contents:"
-          ls -la $src/ops/cmd/ || true
           cp -r $src/ops/cmd/* $out/bin/ || true
-          echo "Result bin contents:"
-          ls -la $out/bin/ || true
         '';
       };
     };
