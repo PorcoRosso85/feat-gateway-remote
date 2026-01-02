@@ -70,6 +70,7 @@
         ];
         shellHook = ''
           export PATH="${self.packages.${system}.gateway-remote}/bin:$PATH"
+          echo "gateway-remote devShell: gw-* commands available"
         '';
         SPEC_DIR = specDir;
       };
