@@ -15,16 +15,16 @@ usage() {
   echo "  --help     Show this help"
   echo ""
   echo "Note: Indirect connection methods (ProxyJump/-J) are prohibited."
-  exit 0
 }
 
 HOST=""
 CMD=""
+SHOW_USAGE=false
 
 for arg in "$@"; do
   case "$arg" in
     --help)
-      usage
+      SHOW_USAGE=true
       ;;
     -*)
       echo "Unknown option: $arg"
@@ -40,10 +40,10 @@ for arg in "$@"; do
   esac
 done
 
-if [ -z "$HOST" ]; then
-  echo "Error: host required"
-  echo "Usage: gw-ssh [user@]host [command]"
-  exit 1
+if [ "$SHOW_USAGE" = true ] || [ -z "$HOST" ]; then
+  usage
+  [ -z "$HOST" ] && exit 1
+  exit 0
 fi
 
 echo "Connecting to: $HOST"
