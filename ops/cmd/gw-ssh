@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# gw-ssh: Direct SSH connection (ProxyJump prohibited)
+# gw-ssh: Direct SSH connection (ProxyJump/ProxyCommand prohibited)
 # Connects to remote via SSH. remote side uses zmx attach via RemoteCommand.
+# Note: This command only accepts host. Command arguments are not supported.
 
 if ! command -v ssh >/dev/null 2>&1; then
   echo "contracted command: gw-ssh (openssh not available)"
@@ -9,16 +10,15 @@ fi
 
 usage() {
   echo "contracted command: gw-ssh"
-  echo "Usage: gw-ssh [user@]host [command]"
+  echo "Usage: gw-ssh [user@]host"
   echo ""
   echo "Options:"
   echo "  --help     Show this help"
   echo ""
-  echo "Note: Direct connection only. Jump methods are prohibited."
+  echo "Note: Direct connection only. Jump/Proxy methods are prohibited."
 }
 
 HOST=""
-CMD=""
 SHOW_HELP=false
 
 for arg in "$@"; do
@@ -34,7 +34,9 @@ for arg in "$@"; do
       if [ -z "$HOST" ]; then
         HOST="$arg"
       else
-        CMD="$arg"
+        echo "Error: only one host argument supported"
+        echo "Usage: gw-ssh [user@]host"
+        exit 1
       fi
       ;;
   esac
@@ -46,9 +48,4 @@ if [ "$SHOW_HELP" = true ] || [ -z "$HOST" ]; then
 fi
 
 echo "Connecting to: $HOST"
-if [ -n "$CMD" ]; then
-  echo "Running command: $CMD"
-  exec ssh -o ProxyJump=none -o JumpHost=none "$HOST" "$CMD"
-else
-  exec ssh -o ProxyJump=none -o JumpHost=none "$HOST"
-fi
+exec ssh -o ProxyJump=none -o ProxyCommand=none "$HOST"

@@ -35,7 +35,7 @@ tdd_red: {
       expect: {
         exit: 0
         stdoutContains: ["contracted command: gw-ssh"]
-        stdoutForbid: ["ProxyJump", "-J", "JumpHost"]
+        stdoutForbid: ["ProxyJump", "ProxyCommand"]
       }
     },
     {
