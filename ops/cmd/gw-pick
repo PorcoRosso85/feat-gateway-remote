@@ -1,18 +1,23 @@
 #!/usr/bin/env bash
-# gw-pick: Select zmx session or create new one via fzf
+# gw-pick: Select SSH host via fzf
 
 if ! command -v fzf >/dev/null 2>&1; then
   echo "contracted command: gw-pick (fzf not available)"
   exit 1
 fi
 
-zmx_sessions() {
-  if command -v zmx >/dev/null 2>&1; then
-    zmx list 2>/dev/null | grep -v "^no sessions" | grep -v "^zmx -" || true
+if ! command -v ssh >/dev/null 2>&1; then
+  echo "contracted command: gw-pick (openssh not available)"
+  exit 1
+fi
+
+get_hosts_from_ssh_config() {
+  if [ -f ~/.ssh/config ]; then
+    grep -i "^Host " ~/.ssh/config 2>/dev/null | awk '{print $2}' | grep -v '^\*$' || true
   fi
 }
 
-SESSIONS=$(zmx_sessions)
+HOSTS=$(get_hosts_from_ssh_config)
 
 if [ ! -t 1 ]; then
   echo "contracted command: gw-pick (uses fzf)"
@@ -21,40 +26,41 @@ if [ ! -t 1 ]; then
   echo "Options:"
   echo "  --height <rows>  Set fzf height"
   echo "  --reverse        Show options in reverse"
-  if [ -n "$SESSIONS" ]; then
+  if [ -n "$HOSTS" ]; then
     echo ""
-    echo "Available zmx sessions:"
-    echo "$SESSIONS" | head -5
+    echo "Available hosts from ~/.ssh/config:"
+    echo "$HOSTS" | head -5
   fi
+  echo ""
+  echo "Or enter host manually: gw-pick user@host"
   exit 0
 fi
 
 OPTIONS=()
-if [ -n "$SESSIONS" ]; then
-  while IFS= read -r line; do
-    [ -z "$line" ] && continue
-    OPTIONS+=("session: $line")
-  done <<< "$SESSIONS"
+if [ -n "$HOSTS" ]; then
+  while IFS= read -r host; do
+    [ -z "$host" ] && continue
+    OPTIONS+=("ssh: $host")
+  done <<< "$HOSTS"
 fi
-OPTIONS+=("new: Create new connection")
+OPTIONS+=("manual: Enter host manually")
 
-CHOICE=$(printf '%s\n' "${OPTIONS[@]}" | fzf --height 50% --reverse --prompt "Select session or create new: ")
+CHOICE=$(printf '%s\n' "${OPTIONS[@]}" | fzf --height 50% --reverse --prompt "Select SSH target: ")
 
 if [ -z "$CHOICE" ]; then
   echo "No selection made"
   exit 1
 fi
 
-if [[ "$CHOICE" == session:* ]]; then
-  SESSION_NAME=$(echo "$CHOICE" | sed 's/session: //')
-  echo "Attaching to session: $SESSION_NAME"
-  exec zmx attach "$SESSION_NAME"
-elif [[ "$CHOICE" == new:* ]]; then
-  echo "Enter host to connect (e.g., user@host or hostname):"
+if [[ "$CHOICE" == ssh:* ]]; then
+  HOST=$(echo "$CHOICE" | sed 's/ssh: //')
+  echo "Selected host: $HOST"
+  exec gw-ssh "$HOST"
+elif [[ "$CHOICE" == manual:* ]]; then
+  echo "Enter host (user@host or hostname):"
   read -r HOST
   if [ -n "$HOST" ]; then
-    echo "Starting session for: $HOST"
-    exec zmx run "$HOST"
+    exec gw-ssh "$HOST"
   else
     echo "No host entered"
     exit 1
