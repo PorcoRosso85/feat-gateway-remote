@@ -14,7 +14,7 @@ usage() {
   echo "Options:"
   echo "  --help     Show this help"
   echo ""
-  echo "Note: Indirect connection methods (ProxyJump/-J) are prohibited."
+  echo "Note: Direct connection only. Jump methods are prohibited."
 }
 
 HOST=""
