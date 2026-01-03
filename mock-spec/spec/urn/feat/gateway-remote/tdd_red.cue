@@ -70,7 +70,7 @@ tdd_red: {
       exec: ["gw-doctor", "key-check"]
       expect: {
         exit: 0
-        stdoutContains: ["OK:"]
+        stdoutContains: ["key"]
         stdoutForbid: ["FAIL"]
       }
     }

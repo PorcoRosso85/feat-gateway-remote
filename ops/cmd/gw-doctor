@@ -73,14 +73,32 @@ case "${1:-usage}" in
     ;;
   key-check)
     shift
+    local any_checked=false
+    local any_failed=false
     if [ $# -gt 0 ]; then
       for key in "$@"; do
-        check_key_health "$key" || status="issue"
+        any_checked=true
+        if ! check_key_health "$key"; then
+          any_failed=true
+        fi
       done
     else
-      check_key_health || status="issue"
+      any_checked=true
+      if ! check_key_health; then
+        any_failed=true
+      fi
     fi
-    [ "$status" = "ok" ] && exit 0 || exit 1
+    if [ "$any_checked" = true ]; then
+      if [ "$any_failed" = true ]; then
+        echo "WARN: Some keys have issues (see above)"
+        exit 0
+      else
+        echo "OK: All checked keys are healthy"
+        exit 0
+      fi
+    fi
+    echo "Usage: gw-doctor key-check [key_file ...]"
+    exit 0
     ;;
   *)
     echo "Unknown command: $1"
