@@ -19,12 +19,12 @@ usage() {
 
 HOST=""
 CMD=""
-SHOW_USAGE=false
+SHOW_HELP=false
 
 for arg in "$@"; do
   case "$arg" in
     --help)
-      SHOW_USAGE=true
+      SHOW_HELP=true
       ;;
     -*)
       echo "Unknown option: $arg"
@@ -40,9 +40,8 @@ for arg in "$@"; do
   esac
 done
 
-if [ "$SHOW_USAGE" = true ] || [ -z "$HOST" ]; then
+if [ "$SHOW_HELP" = true ] || [ -z "$HOST" ]; then
   usage
-  [ -z "$HOST" ] && exit 1
   exit 0
 fi
 
