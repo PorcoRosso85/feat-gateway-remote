@@ -1,38 +1,90 @@
 #!/usr/bin/env bash
-# gw-doctor: contract verification tool
+# gw-doctor: contract verification tool (read-only, no auto-fix)
 
 SCRIPT_DIR="$(cd "${0%/*}" && pwd)"
 
-case "${1:-check}" in
+usage() {
+  echo "contracted command: gw-doctor"
+  echo "Usage: gw-doctor <command>"
+  echo ""
+  echo "Commands:"
+  echo "  check-tools    Verify required tools are available"
+  echo "  forbid-scan    Check for prohibited items (tmux)"
+  echo "  key-check      Verify SSH key health (read-only, no fix)"
+  echo ""
+  echo "Note: All checks are read-only. This tool does not modify files,"
+  echo "      generate keys, or modify known_hosts. Use external tools for repairs."
+  exit 0
+}
+
+check_key_health() {
+  local key_file="${1:-$HOME/.ssh/id_rsa}"
+  local status="ok"
+
+  if [ ! -f "$key_file" ]; then
+    echo "WARN: key file not found: $key_file"
+    return 1
+  fi
+
+  if [ ! -r "$key_file" ]; then
+    echo "WARN: key file not readable: $key_file"
+    return 1
+  fi
+
+  if ! ssh-keygen -y -f "$key_file" >/dev/null 2>&1; then
+    echo "FAIL: key is corrupted or passphrase-protected: $key_file"
+    return 1
+  fi
+
+  local perms
+  perms=$(stat -c "%a" "$key_file" 2>/dev/null || echo "unknown")
+  if [ "$perms" != "600" ] && [ "$perms" != "400" ]; then
+    echo "WARN: key permissions are too open ($perms), recommend 600 or 400: $key_file"
+  fi
+
+  echo "OK: key appears healthy: $key_file"
+  return 0
+}
+
+case "${1:-usage}" in
+  usage|--help|-h)
+    usage
+    ;;
   check-tools)
-    # Check required tools from contract
-    for tool in fzf ssh zmx; do
+    for tool in fzf ssh; do
       if ! command -v "$tool" >/dev/null 2>&1; then
         echo "ERROR: required tool '$tool' not found"
         exit 1
       fi
     done
-    echo "All required tools available: fzf, ssh, zmx"
+    echo "All required tools available: fzf, ssh"
     exit 0
     ;;
   forbid-scan)
-    # Static forbid scan: check for prohibited items in artifacts
     fail=0
-
-    # tmux injection check (word boundary, exclude this script)
-    # -r: recursive, -I: ignore binary, -w: word boundary
     if grep -rIw --exclude=gw-doctor "tmux" "$SCRIPT_DIR" 2>/dev/null; then
-      echo "FAIL: tmux detected in output files"
+      echo "FAIL: tmux detected in artifacts"
       fail=1
     fi
-
     if [ $fail -eq 0 ]; then
       echo "OK: No forbidden items detected"
     fi
     exit $fail
     ;;
+  key-check)
+    shift
+    if [ $# -gt 0 ]; then
+      for key in "$@"; do
+        check_key_health "$key" || status="issue"
+      done
+    else
+      check_key_health || status="issue"
+    fi
+    [ "$status" = "ok" ] && exit 0 || exit 1
+    ;;
   *)
-    echo "contracted command: gw-doctor"
-    echo "Usage: gw-doctor check-tools | forbid-scan"
+    echo "Unknown command: $1"
+    usage
+    exit 1
     ;;
 esac

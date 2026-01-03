@@ -55,6 +55,24 @@ tdd_red: {
         stdoutContains: ["OK:"]
         stdoutForbid: ["FAIL"]
       }
+    },
+    {
+      id: "doctor-read-only"
+      exec: ["gw-doctor"]
+      expect: {
+        exit: 0
+        stdoutContains: ["read-only"]
+        stdoutForbid: []
+      }
+    },
+    {
+      id: "doctor-key-check"
+      exec: ["gw-doctor", "key-check"]
+      expect: {
+        exit: 0
+        stdoutContains: ["OK:"]
+        stdoutForbid: ["FAIL"]
+      }
     }
   ]
 }

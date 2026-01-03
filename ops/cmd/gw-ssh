@@ -10,21 +10,27 @@ fi
 
 usage() {
   echo "contracted command: gw-ssh"
-  echo "Usage: gw-ssh [user@]host"
+  echo "Usage: gw-ssh [options] [user@]host"
   echo ""
   echo "Options:"
-  echo "  --help     Show this help"
+  echo "  --help          Show this help"
+  echo "  --accept-new    Accept new host keys automatically (default: ask)"
   echo ""
   echo "Note: Direct connection only. Jump/Proxy methods are prohibited."
+  echo "      RequestTTY=force is used for stable zmx attach on remote."
 }
 
 HOST=""
 SHOW_HELP=false
+ACCEPT_NEW=false
 
 for arg in "$@"; do
   case "$arg" in
     --help)
       SHOW_HELP=true
+      ;;
+    --accept-new)
+      ACCEPT_NEW=true
       ;;
     -*)
       echo "Unknown option: $arg"
@@ -35,7 +41,7 @@ for arg in "$@"; do
         HOST="$arg"
       else
         echo "Error: only one host argument supported"
-        echo "Usage: gw-ssh [user@]host"
+        echo "Usage: gw-ssh [options] [user@]host"
         exit 1
       fi
       ;;
@@ -47,5 +53,10 @@ if [ "$SHOW_HELP" = true ] || [ -z "$HOST" ]; then
   exit 0
 fi
 
+HOSTKEY_OPT="-o StrictHostKeyChecking=ask"
+if [ "$ACCEPT_NEW" = true ]; then
+  HOSTKEY_OPT="-o StrictHostKeyChecking=accept-new"
+fi
+
 echo "Connecting to: $HOST"
-exec ssh -o ProxyJump=none -o ProxyCommand=none -o RequestTTY=force "$HOST"
+exec ssh $HOSTKEY_OPT -o ProxyJump=none -o ProxyCommand=none -o RequestTTY=force "$HOST"
