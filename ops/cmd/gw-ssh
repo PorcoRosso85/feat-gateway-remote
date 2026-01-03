@@ -48,4 +48,4 @@ if [ "$SHOW_HELP" = true ] || [ -z "$HOST" ]; then
 fi
 
 echo "Connecting to: $HOST"
-exec ssh -o ProxyJump=none -o ProxyCommand=none "$HOST"
+exec ssh -o ProxyJump=none -o ProxyCommand=none -o RequestTTY=force "$HOST"

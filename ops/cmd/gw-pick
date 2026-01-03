@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # gw-pick: Select SSH host via fzf
 
+trap 'echo "Cancelled" && exit 0' INT
+
 if ! command -v fzf >/dev/null 2>&1; then
   echo "contracted command: gw-pick (fzf not available)"
   exit 1
@@ -48,8 +50,8 @@ OPTIONS+=("manual: Enter host manually")
 CHOICE=$(printf '%s\n' "${OPTIONS[@]}" | fzf --height 50% --reverse --prompt "Select SSH target: ")
 
 if [ -z "$CHOICE" ]; then
-  echo "No selection made"
-  exit 1
+  echo "Cancelled"
+  exit 0
 fi
 
 if [[ "$CHOICE" == ssh:* ]]; then
@@ -62,8 +64,8 @@ elif [[ "$CHOICE" == manual:* ]]; then
   if [ -n "$HOST" ]; then
     exec gw-ssh "$HOST"
   else
-    echo "No host entered"
-    exit 1
+    echo "Cancelled"
+    exit 0
   fi
 fi
 
