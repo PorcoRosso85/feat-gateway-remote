@@ -1,6 +1,6 @@
 # Handoff Specs (実装者向け)
 
-## 実装対象（A〜D）
+## 実装対象（A〜E）
 
 ### (A) gw-doctor read-only 方針
 
@@ -64,6 +64,23 @@ E2E証拠として以下を取得:
 | 3 | ProxyJump/ProxyCommand 禁止 | コード確認 (`-o ProxyJump=none -o ProxyCommand=none`) |
 | 4 | RemoteCommand で zmx attach | remote 側の実行ログ |
 
+### (E) gw-doctor --info フラグ
+
+gw-doctor は2つの動作モードを持つ:
+
+| フラグ | 動作 | 用途 |
+|--------|------|------|
+| なし | fail-fast (問題があれば exit non-0) | CI/自動化、 Issue 検出 |
+| `--info` | 情報表示のみ (常に exit 0) | 人間による確認、レポート |
+
+```bash
+# CI/自動化: 問題があれば失敗
+gw-doctor check-tools    # ツール缺失 → exit 1
+
+# 人間確認: 問題を表示するが成功扱い
+gw-doctor check-tools --info   # ツール缺失 → 表示、exit 0
+```
+
 ---
 
 ## 受入条件
@@ -77,6 +94,8 @@ E2E証拠として以下を取得:
 
 ## コミット
 
+- `10e59e1` fix: remove local keyword from gw-doctor and add PATH for bb-red
+- `3256a94` feat: gw-doctor --info flag + fail-fast policy
 - `0a3b0bb` fix: gw-doctor key-check exits 0 always (informational only)
 - `ba0e46e` feat: gw-doctor key-check (read-only) + gw-ssh hostkey policy
 - `3b481f3` fix: gw-pick UX (exit 0 on cancel) + gw-ssh add RequestTTY=force
