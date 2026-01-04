@@ -69,9 +69,9 @@ tdd_red: {
       id: "doctor-key-check"
       exec: ["gw-doctor", "key-check"]
       expect: {
-        exit: 0
-        stdoutContains: ["key"]
-        stdoutForbid: ["FAIL"]
+        exit: 1
+        stdoutContains: ["FAIL"]
+        stdoutForbid: []
       }
     }
   ]
