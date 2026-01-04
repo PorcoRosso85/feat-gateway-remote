@@ -161,6 +161,8 @@
             ''
               set -euo pipefail
 
+              export PATH="${pkgsWithOverlays.fzf}/bin:${pkgsWithOverlays.openssh}/bin:$PATH"
+
               json="$(cue eval ${specDir}/tdd_red.cue -e tdd_red --out json)"
               count="$(echo "$json" | jq '.tests | length')"
 
