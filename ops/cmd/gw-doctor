@@ -86,7 +86,7 @@ case "$CMD" in
     usage
     ;;
   check-tools)
-    local fail=0
+    fail=0
     for tool in fzf ssh; do
       if ! command -v "$tool" >/dev/null 2>&1; then
         echo "FAIL: required tool '$tool' not found"
@@ -99,7 +99,7 @@ case "$CMD" in
     [ "$INFO_MODE" = true ] && exit 0 || exit $fail
     ;;
   forbid-scan)
-    local fail=0
+    fail=0
     if grep -rIw --exclude=gw-doctor "tmux" "$SCRIPT_DIR" 2>/dev/null; then
       echo "FAIL: tmux detected in artifacts"
       fail=1
@@ -110,8 +110,8 @@ case "$CMD" in
     [ "$INFO_MODE" = true ] && exit 0 || exit $fail
     ;;
   key-check)
-    local any_checked=false
-    local any_failed=false
+    any_checked=false
+    any_failed=false
     shift
     if [ $# -gt 0 ]; then
       for key in "$@"; do
